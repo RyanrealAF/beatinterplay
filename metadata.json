@@ -1,0 +1,6 @@
+{
+  "name": "Cadence & Beat Interplay DSP",
+  "description": "Client-side Web Audio DSP micro-timing analysis engine, spectral flux visualizer, 16th-note subdivision distribution, lyric timeline, and live bounce plot.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
