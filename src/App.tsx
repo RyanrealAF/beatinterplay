@@ -209,13 +209,20 @@ export default function App() {
     setCurrentTime(timeSec);
   };
 
-  // Add & Delete Lyrics
+  // Add, Delete & Bulk Import Lyrics
   const handleAddLyric = (item: LyricItem) => {
     setLyrics((prev) => [...prev, item].sort((a, b) => a.timestamp - b.timestamp));
   };
 
   const handleDeleteLyric = (id: string) => {
     setLyrics((prev) => prev.filter((l) => l.id !== id));
+  };
+
+  const handleBulkImportLyrics = (newLyrics: LyricItem[], append: boolean) => {
+    setLyrics((prev) => {
+      const combined = append ? [...prev, ...newLyrics] : newLyrics;
+      return combined.sort((a, b) => a.timestamp - b.timestamp);
+    });
   };
 
   // Clean canvas data
@@ -343,9 +350,12 @@ export default function App() {
             <LyricTimeline
               lyrics={lyrics}
               currentTime={currentTime}
+              duration={duration}
+              bpm={bpm}
               onSeek={handleSeek}
               onAddLyric={handleAddLyric}
               onDeleteLyric={handleDeleteLyric}
+              onBulkImportLyrics={handleBulkImportLyrics}
             />
           </div>
         </div>

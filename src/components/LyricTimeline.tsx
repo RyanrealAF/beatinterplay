@@ -1,23 +1,31 @@
 import React, { useState } from 'react';
 import { LyricItem } from '../types';
-import { Clock, Plus, Trash2, Edit3, Check } from 'lucide-react';
+import { Clock, Plus, Trash2, Edit3, Check, FileText } from 'lucide-react';
+import { BulkLyricsModal } from './BulkLyricsModal';
 
 interface LyricTimelineProps {
   lyrics: LyricItem[];
   currentTime: number;
+  duration?: number;
+  bpm?: number;
   onSeek: (timeSec: number) => void;
   onAddLyric: (item: LyricItem) => void;
   onDeleteLyric: (id: string) => void;
+  onBulkImportLyrics?: (newLyrics: LyricItem[], append: boolean) => void;
 }
 
 export const LyricTimeline: React.FC<LyricTimelineProps> = ({
   lyrics,
   currentTime,
+  duration = 16.0,
+  bpm = 120,
   onSeek,
   onAddLyric,
   onDeleteLyric,
+  onBulkImportLyrics,
 }) => {
   const [isAdding, setIsAdding] = useState(false);
+  const [isBulkOpen, setIsBulkOpen] = useState(false);
   const [newText, setNewText] = useState('');
   const [newTime, setNewTime] = useState(currentTime.toFixed(1));
   const [newPocket, setNewPocket] = useState<'on' | 'ahead' | 'behind' | 'laid-back' | 'pushing'>('on');
@@ -68,16 +76,25 @@ export const LyricTimeline: React.FC<LyricTimelineProps> = ({
           <Clock className="w-4 h-4 text-[#00E5FF]" />
           LYRIC & CADENCE TIMELINE
         </span>
-        <button
-          onClick={() => {
-            setNewTime(currentTime.toFixed(2));
-            setIsAdding(!isAdding);
-          }}
-          className="flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase bg-[#00E5FF]/10 text-[#00E5FF] hover:bg-[#00E5FF]/20 border border-[#00E5FF]/30 px-2.5 py-1 rounded transition-colors"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          ADD LINE
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsBulkOpen(true)}
+            className="flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase bg-[#FF2A55]/10 text-[#FF2A55] hover:bg-[#FF2A55]/20 border border-[#FF2A55]/30 px-2.5 py-1 rounded transition-colors"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            WHOLE LYRICS
+          </button>
+          <button
+            onClick={() => {
+              setNewTime(currentTime.toFixed(2));
+              setIsAdding(!isAdding);
+            }}
+            className="flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase bg-[#00E5FF]/10 text-[#00E5FF] hover:bg-[#00E5FF]/20 border border-[#00E5FF]/30 px-2.5 py-1 rounded transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            ADD LINE
+          </button>
+        </div>
       </div>
 
       {/* Add Lyric Line Form */}
@@ -199,6 +216,28 @@ export const LyricTimeline: React.FC<LyricTimelineProps> = ({
           );
         })}
       </div>
+
+      {/* Bulk Whole Lyrics Modal */}
+      <BulkLyricsModal
+        isOpen={isBulkOpen}
+        onClose={() => setIsBulkOpen(false)}
+        currentLyrics={lyrics}
+        duration={duration}
+        bpm={bpm}
+        onApplyLyrics={(newLyrics, append) => {
+          if (onBulkImportLyrics) {
+            onBulkImportLyrics(newLyrics, append);
+          } else {
+            if (append) {
+              newLyrics.forEach((item) => onAddLyric(item));
+            } else {
+              // Replace mode if no handler passed directly
+              lyrics.forEach((l) => onDeleteLyric(l.id));
+              newLyrics.forEach((item) => onAddLyric(item));
+            }
+          }
+        }}
+      />
     </div>
   );
 };

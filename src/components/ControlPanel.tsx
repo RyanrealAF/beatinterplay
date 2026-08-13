@@ -1,5 +1,5 @@
 import React from 'react';
-import { Upload, Volume2, VolumeX, Sparkles } from 'lucide-react';
+import { Upload, Sparkles } from 'lucide-react';
 import { AudioTrack } from '../types';
 
 interface ControlPanelProps {
@@ -129,105 +129,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           />
         </div>
 
-        {/* Channel Volume Sliders & Mutes: 3 Inputs (Vocal, Bass, Drums) */}
-        <div className="space-y-3 pt-2 border-t border-white/10">
-          <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">
-            3 INPUT CONTROLS (VOCAL, BASS, DRUMS)
-          </label>
 
-          {/* 1. Vocal Input Level */}
-          <div className="space-y-1">
-            <div className="flex justify-between items-center text-[10px] uppercase tracking-wider">
-              <span className="text-[#FF2A55] font-bold flex items-center gap-1">
-                VOCAL INPUT LEVEL
-              </span>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-400">{vocalMuted ? 'MUTE' : `${Math.round(vocalVolume * 100)}%`}</span>
-                <button
-                  onClick={onToggleVocalMute}
-                  className={`p-1 rounded border transition-colors ${
-                    vocalMuted
-                      ? 'bg-[#FF2A55]/20 border-[#FF2A55] text-[#FF2A55]'
-                      : 'bg-white/5 border-white/10 text-gray-300 hover:text-white'
-                  }`}
-                >
-                  {vocalMuted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
-                </button>
-              </div>
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              value={vocalMuted ? 0 : vocalVolume}
-              onChange={(e) => onVocalVolChange(parseFloat(e.target.value))}
-              className="w-full accent-[#FF2A55] bg-gray-800 rounded h-1.5 cursor-pointer"
-            />
-          </div>
-
-          {/* 2. Bass Input Level */}
-          <div className="space-y-1">
-            <div className="flex justify-between items-center text-[10px] uppercase tracking-wider">
-              <span className="text-[#A855F7] font-bold flex items-center gap-1">
-                BASS INPUT LEVEL
-              </span>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-400">{bassMuted ? 'MUTE' : `${Math.round(bassVolume * 100)}%`}</span>
-                <button
-                  onClick={onToggleBassMute}
-                  className={`p-1 rounded border transition-colors ${
-                    bassMuted
-                      ? 'bg-[#A855F7]/20 border-[#A855F7] text-[#A855F7]'
-                      : 'bg-white/5 border-white/10 text-gray-300 hover:text-white'
-                  }`}
-                >
-                  {bassMuted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
-                </button>
-              </div>
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              value={bassMuted ? 0 : bassVolume}
-              onChange={(e) => onBassVolChange(parseFloat(e.target.value))}
-              className="w-full accent-[#A855F7] bg-gray-800 rounded h-1.5 cursor-pointer"
-            />
-          </div>
-
-          {/* 3. Drum Input Level */}
-          <div className="space-y-1">
-            <div className="flex justify-between items-center text-[10px] uppercase tracking-wider">
-              <span className="text-[#00E5FF] font-bold flex items-center gap-1">
-                DRUM INPUT LEVEL
-              </span>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-400">{drumMuted ? 'MUTE' : `${Math.round(drumVolume * 100)}%`}</span>
-                <button
-                  onClick={onToggleDrumMute}
-                  className={`p-1 rounded border transition-colors ${
-                    drumMuted
-                      ? 'bg-[#FF2A55]/20 border-[#FF2A55] text-[#FF2A55]'
-                      : 'bg-white/5 border-white/10 text-gray-300 hover:text-white'
-                  }`}
-                >
-                  {drumMuted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
-                </button>
-              </div>
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              value={drumMuted ? 0 : drumVolume}
-              onChange={(e) => onDrumVolChange(parseFloat(e.target.value))}
-              className="w-full accent-[#00E5FF] bg-gray-800 rounded h-1.5 cursor-pointer"
-            />
-          </div>
-        </div>
       </div>
 
       {/* Synchronicity Card */}
