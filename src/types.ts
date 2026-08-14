@@ -1,5 +1,14 @@
 export type PocketState = 'on' | 'ahead' | 'behind' | 'laid-back' | 'pushing';
 
+export interface WordTiming {
+  text: string;
+  start: number; // in seconds
+  end: number; // in seconds
+  micro_ms: number; // micro timing offset in milliseconds
+  stressed: boolean;
+  line_id?: number;
+}
+
 export interface LyricItem {
   id: string;
   type: 'cue' | 'line';
@@ -9,6 +18,8 @@ export interface LyricItem {
   offsetMs: number; // e.g. -12 to +12 ms
   subdivision: 0 | 1 | 2 | 3; // 16th note subdivision index (.0, .1, .2, .3)
   note?: string;
+  words?: WordTiming[];
+  line_id?: number;
 }
 
 export interface AudioTrack {
@@ -18,6 +29,9 @@ export interface AudioTrack {
   genre: string;
   description: string;
   lyrics: LyricItem[];
+  beatGrid?: number[];
+  downbeats?: number[];
+  words?: WordTiming[];
 }
 
 export type PresetTrack = AudioTrack;
@@ -45,4 +59,4 @@ export interface TelemetryMetrics {
   totalOnsets: number;
 }
 
-export type ViewMode = 'spectral' | 'bounce' | 'spectrum-scope' | 'full-dashboard';
+export type ViewMode = 'spectral' | 'bounce' | 'spectrum-scope' | 'syncopation' | 'full-dashboard';

@@ -1,11 +1,11 @@
 import React from 'react';
-import { Upload, Sparkles } from 'lucide-react';
+import { Sparkles, Music2, Volume2, VolumeX } from 'lucide-react';
 import { AudioTrack } from '../types';
+import { DEFAULT_AUDIO_TRACKS } from '../data/presetTracks';
 
 interface ControlPanelProps {
   selectedTrack: AudioTrack;
   onSelectTrack: (track: AudioTrack) => void;
-  onFileUpload: (files: FileList) => void;
   vocalVolume: number;
   bassVolume: number;
   drumVolume: number;
@@ -23,13 +23,11 @@ interface ControlPanelProps {
   syncScore: number;
   avgDriftMs: number;
   bpm: number;
-  onBpmChange: (newBpm: number) => void;
 }
 
 export const ControlPanel: React.FC<ControlPanelProps> = ({
   selectedTrack,
   onSelectTrack,
-  onFileUpload,
   vocalVolume,
   bassVolume,
   drumVolume,
@@ -47,7 +45,6 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   syncScore,
   avgDriftMs,
   bpm,
-  onBpmChange,
 }) => {
   return (
     <div className="space-y-4 font-mono text-xs">
@@ -58,58 +55,154 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             <span className="w-1.5 h-1.5 bg-[#00E5FF] rounded-full" />
             DSP ENGINE CONTROLS
           </span>
-          <span className="text-[10px] text-gray-400 font-normal">3-INPUT AUDIO</span>
+          <span className="text-[10px] text-gray-400 font-normal">88 BPM DEDICATED</span>
         </h2>
 
-        {/* Dynamic BPM Control */}
-        <div className="space-y-1.5 pt-2 border-t border-white/10">
-          <div className="flex justify-between items-center text-[10px] uppercase tracking-wider">
-            <span className="text-[#00E5FF] font-bold">TEMPO (BPM)</span>
-            <span className="text-white font-bold text-xs">{bpm} BPM</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="range"
-              min="60"
-              max="200"
-              step="1"
-              value={bpm}
-              onChange={(e) => onBpmChange(parseInt(e.target.value, 10))}
-              className="flex-1 accent-[#00E5FF] bg-gray-800 rounded h-1.5 cursor-pointer"
-            />
-            <input
-              type="number"
-              min="60"
-              max="200"
-              value={bpm}
-              onChange={(e) => onBpmChange(Math.max(60, Math.min(200, parseInt(e.target.value, 10) || 120)))}
-              className="w-14 bg-black border border-white/10 rounded px-1.5 py-0.5 text-center text-white text-[11px] font-bold outline-none focus:border-[#00E5FF]"
-            />
+        {/* Provided Audio Track Switcher */}
+        <div className="space-y-2">
+          <label className="text-[10px] text-gray-400 flex items-center justify-between uppercase tracking-wider">
+            <span className="flex items-center gap-1.5">
+              <Music2 className="w-3.5 h-3.5 text-[#00E5FF]" />
+              PROVIDED AUDIO FILES
+            </span>
+            <span className="text-[9px] text-[#00E5FF] font-bold">{bpm} BPM</span>
+          </label>
+          <div className="grid grid-cols-1 gap-1.5">
+            {DEFAULT_AUDIO_TRACKS.map((t) => {
+              const isSelected = selectedTrack.id === t.id;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => onSelectTrack(t)}
+                  className={`text-left p-2 rounded border transition-all text-[11px] ${
+                    isSelected
+                      ? 'bg-[#00E5FF]/10 border-[#00E5FF] text-white shadow-sm'
+                      : 'bg-black/40 border-white/10 text-gray-400 hover:text-gray-200 hover:border-gray-700'
+                  }`}
+                >
+                  <div className="font-bold flex items-center justify-between">
+                    <span className="truncate">{t.name}</span>
+                    {isSelected && (
+                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#00E5FF] text-black font-bold uppercase tracking-wider">
+                        ACTIVE
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[9px] text-gray-500 mt-0.5 truncate">{t.genre}</div>
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Custom Audio File Upload */}
-        <div className="space-y-1.5 pt-2 border-t border-white/10">
-          <label className="text-[10px] text-gray-400 flex items-center justify-between uppercase tracking-wider">
-            <span>CUSTOM AUDIO STEMS</span>
-            <span className="text-[9px] text-gray-500">.WAV, .MP3, .FLAC</span>
-          </label>
+        {/* 3-Channel Stem Volume & Mute Mixer */}
+        <div className="space-y-3 pt-2 border-t border-white/10">
+          <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider flex justify-between items-center">
+            <span>3-CHANNEL DSP MIXER</span>
+            <span className="text-[9px] text-gray-500">STEM BUS</span>
+          </div>
 
-          <label className="flex items-center justify-center gap-2 border border-dashed border-white/20 hover:border-[#00E5FF] bg-black/40 hover:bg-black/60 px-3 py-2.5 rounded cursor-pointer text-[11px] transition-all text-gray-300 uppercase tracking-wider">
-            <Upload className="w-3.5 h-3.5 text-[#00E5FF]" />
-            <span className="truncate">Upload Stem Files</span>
+          {/* Vocals Bus */}
+          <div className="space-y-1">
+            <div className="flex justify-between items-center text-[10px]">
+              <span className="text-gray-300 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-[#00E5FF]" />
+                VOCALS (CADENCE)
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={onToggleVocalMute}
+                  className={`p-1 rounded transition-colors ${
+                    vocalMuted ? 'text-[#FF2A55] bg-[#FF2A55]/10' : 'text-gray-400 hover:text-white'
+                  }`}
+                  title={vocalMuted ? 'Unmute Vocals' : 'Mute Vocals'}
+                >
+                  {vocalMuted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
+                </button>
+                <span className="text-[10px] text-gray-400 w-8 text-right font-bold">
+                  {vocalMuted ? 'MUTE' : `${Math.round(vocalVolume * 100)}%`}
+                </span>
+              </div>
+            </div>
             <input
-              type="file"
-              multiple
-              accept="audio/*"
-              className="hidden"
-              onChange={(e) => {
-                if (e.target.files && e.target.files.length > 0) {
-                  onFileUpload(e.target.files);
-                }
-              }}
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={vocalMuted ? 0 : vocalVolume}
+              onChange={(e) => onVocalVolChange(parseFloat(e.target.value))}
+              disabled={vocalMuted}
+              className="w-full accent-[#00E5FF] bg-gray-800 rounded h-1 cursor-pointer disabled:opacity-40"
             />
-          </label>
+          </div>
+
+          {/* Bass Bus */}
+          <div className="space-y-1">
+            <div className="flex justify-between items-center text-[10px]">
+              <span className="text-gray-300 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-[#FF2A55]" />
+                BASS (808 SUB)
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={onToggleBassMute}
+                  className={`p-1 rounded transition-colors ${
+                    bassMuted ? 'text-[#FF2A55] bg-[#FF2A55]/10' : 'text-gray-400 hover:text-white'
+                  }`}
+                  title={bassMuted ? 'Unmute Bass' : 'Mute Bass'}
+                >
+                  {bassMuted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
+                </button>
+                <span className="text-[10px] text-gray-400 w-8 text-right font-bold">
+                  {bassMuted ? 'MUTE' : `${Math.round(bassVolume * 100)}%`}
+                </span>
+              </div>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={bassMuted ? 0 : bassVolume}
+              onChange={(e) => onBassVolChange(parseFloat(e.target.value))}
+              disabled={bassMuted}
+              className="w-full accent-[#FF2A55] bg-gray-800 rounded h-1 cursor-pointer disabled:opacity-40"
+            />
+          </div>
+
+          {/* Drums Bus */}
+          <div className="space-y-1">
+            <div className="flex justify-between items-center text-[10px]">
+              <span className="text-gray-300 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-[#FFB300]" />
+                DRUMS (BEAT & TRANSIENTS)
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={onToggleDrumMute}
+                  className={`p-1 rounded transition-colors ${
+                    drumMuted ? 'text-[#FF2A55] bg-[#FF2A55]/10' : 'text-gray-400 hover:text-white'
+                  }`}
+                  title={drumMuted ? 'Unmute Drums' : 'Mute Drums'}
+                >
+                  {drumMuted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
+                </button>
+                <span className="text-[10px] text-gray-400 w-8 text-right font-bold">
+                  {drumMuted ? 'MUTE' : `${Math.round(drumVolume * 100)}%`}
+                </span>
+              </div>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={drumMuted ? 0 : drumVolume}
+              onChange={(e) => onDrumVolChange(parseFloat(e.target.value))}
+              disabled={drumMuted}
+              className="w-full accent-[#FFB300] bg-gray-800 rounded h-1 cursor-pointer disabled:opacity-40"
+            />
+          </div>
         </div>
 
         {/* Flux Sensitivity Slider */}
@@ -128,8 +221,6 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             className="w-full accent-[#00E5FF] bg-gray-800 rounded h-1.5 cursor-pointer"
           />
         </div>
-
-
       </div>
 
       {/* Synchronicity Card */}

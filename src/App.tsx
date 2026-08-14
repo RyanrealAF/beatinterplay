@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   LyricItem,
   AudioTrack,
   DSPFrameData,
   TelemetryMetrics,
   ViewMode,
+  WordTiming,
 } from './types';
 import { PRESET_TRACKS } from './data/presetTracks';
 import { globalAudioEngine } from './utils/audioEngine';
@@ -16,6 +17,7 @@ import { BouncePlotCanvas } from './components/BouncePlotCanvas';
 import { SubdivisionHistogram } from './components/SubdivisionHistogram';
 import { SpectrumOscilloscope } from './components/SpectrumOscilloscope';
 import { LyricTimeline } from './components/LyricTimeline';
+import { SyncopationMap } from './components/SyncopationMap';
 import { TelemetryStats } from './components/TelemetryStats';
 import { ExportModal } from './components/ExportModal';
 import { AiFlowAnalyzerModal } from './components/AiFlowAnalyzerModal';
@@ -66,7 +68,14 @@ export default function App() {
   useEffect(() => {
     setLyrics(selectedTrack.lyrics);
     setBpm(selectedTrack.bpm);
-    globalAudioEngine.generateReferenceBeat(selectedTrack.bpm).catch(console.error);
+    globalAudioEngine
+      .generateReferenceBeat(
+        selectedTrack.bpm,
+        selectedTrack.words,
+        selectedTrack.beatGrid,
+        selectedTrack.downbeats
+      )
+      .catch(console.error);
   }, [selectedTrack]);
 
   // Audio time update callback
@@ -189,41 +198,45 @@ export default function App() {
       setIsPlaying(false);
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     } else {
-      await globalAudioEngine.startPlayback(currentTime, bpm);
-      setIsPlaying(true);
-      animFrameRef.current = requestAnimationFrame(runDSPProcessing);
-    }
-  };
-
-  // Handle Custom Audio File Upload
-  const handleFileUpload = async (files: FileList) => {
-    await globalAudioEngine.loadUserAudioFiles(files);
-    if (isPlaying) {
-      globalAudioEngine.startPlayback(0, bpm);
+      try {
+        await globalAudioEngine.startPlayback(
+          currentTime,
+          bpm,
+          selectedTrack.words,
+          selectedTrack.beatGrid,
+          selectedTrack.downbeats
+        );
+        setIsPlaying(true);
+        animFrameRef.current = requestAnimationFrame(runDSPProcessing);
+      } catch (err) {
+        console.error('Error starting DSP playback:', err);
+      }
     }
   };
 
   // Handle Seek
   const handleSeek = (timeSec: number) => {
-    globalAudioEngine.seek(timeSec, bpm);
+    globalAudioEngine.seek(
+      timeSec,
+      bpm,
+      selectedTrack.words,
+      selectedTrack.beatGrid,
+      selectedTrack.downbeats
+    );
     setCurrentTime(timeSec);
   };
 
-  // Add, Delete & Bulk Import Lyrics
-  const handleAddLyric = (item: LyricItem) => {
-    setLyrics((prev) => [...prev, item].sort((a, b) => a.timestamp - b.timestamp));
-  };
-
-  const handleDeleteLyric = (id: string) => {
-    setLyrics((prev) => prev.filter((l) => l.id !== id));
-  };
-
-  const handleBulkImportLyrics = (newLyrics: LyricItem[], append: boolean) => {
-    setLyrics((prev) => {
-      const combined = append ? [...prev, ...newLyrics] : newLyrics;
-      return combined.sort((a, b) => a.timestamp - b.timestamp);
+  // Extract current word list from lyrics or preset track
+  const activeWords: WordTiming[] = useMemo(() => {
+    const list: WordTiming[] = [];
+    lyrics.forEach((item) => {
+      if (item.words && item.words.length > 0) {
+        list.push(...item.words);
+      }
     });
-  };
+    if (list.length > 0) return list;
+    return selectedTrack.words || [];
+  }, [lyrics, selectedTrack.words]);
 
   // Clean canvas data
   const handleClearBuffer = () => {
@@ -268,7 +281,6 @@ export default function App() {
                 setIsPlaying(false);
               }
             }}
-            onFileUpload={handleFileUpload}
             vocalVolume={vocalVol}
             bassVolume={bassVol}
             drumVolume={drumVol}
@@ -304,7 +316,6 @@ export default function App() {
             syncScore={metrics.syncScore}
             avgDriftMs={metrics.avgDriftMs}
             bpm={bpm}
-            onBpmChange={(newBpm) => setBpm(newBpm)}
           />
         </div>
 
@@ -325,8 +336,29 @@ export default function App() {
 
           {viewMode === 'spectrum-scope' && <SpectrumOscilloscope />}
 
+          {viewMode === 'syncopation' && (
+            <SyncopationMap
+              words={activeWords}
+              downbeats={selectedTrack.downbeats}
+              beatGrid={selectedTrack.beatGrid}
+              bpm={bpm}
+              duration={duration}
+              currentTime={currentTime}
+              onSeek={handleSeek}
+            />
+          )}
+
           {viewMode === 'full-dashboard' && (
             <div className="space-y-6">
+              <SyncopationMap
+                words={activeWords}
+                downbeats={selectedTrack.downbeats}
+                beatGrid={selectedTrack.beatGrid}
+                bpm={bpm}
+                duration={duration}
+                currentTime={currentTime}
+                onSeek={handleSeek}
+              />
               <SpectralCanvas
                 dataBuffer={dataBuffer}
                 onClear={handleClearBuffer}
@@ -353,9 +385,6 @@ export default function App() {
               duration={duration}
               bpm={bpm}
               onSeek={handleSeek}
-              onAddLyric={handleAddLyric}
-              onDeleteLyric={handleDeleteLyric}
-              onBulkImportLyrics={handleBulkImportLyrics}
             />
           </div>
         </div>

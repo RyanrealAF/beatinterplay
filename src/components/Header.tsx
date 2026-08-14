@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, Play, Pause, Download, Sparkles, Sliders, Waves, BarChart2, LayoutDashboard } from 'lucide-react';
+import { Activity, Play, Pause, Download, Sparkles, Sliders, Waves, BarChart2, LayoutDashboard, Target } from 'lucide-react';
 import { ViewMode } from '../types';
 
 interface HeaderProps {
@@ -79,6 +79,18 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <Sliders className="w-3.5 h-3.5" />
           FFT & SCOPE
+        </button>
+
+        <button
+          onClick={() => setViewMode('syncopation')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded transition-all text-[10px] font-bold tracking-wider uppercase ${
+            viewMode === 'syncopation'
+              ? 'bg-[#00E5FF] text-black shadow-sm'
+              : 'text-gray-400 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <Target className="w-3.5 h-3.5" />
+          SYNCOPATION MAP
         </button>
 
         <button
